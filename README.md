@@ -15,7 +15,7 @@
 
 ## 🚀 Жива демо-версія
 Переглянути проєкт у дії можна за посиланням:
-👉 **[ВСТАВТЕ ВАШЕ ПОСИЛАННЯ НА GITHUB PAGES ТУТ]**
+👉 **https://anddoro.github.io/exam_project_-Star_Evolution/**
 
 ---
 
