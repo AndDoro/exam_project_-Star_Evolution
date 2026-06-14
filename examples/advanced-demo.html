@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>3D Зоряна еволюція</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { margin: 0; font-family: sans-serif; background: #000; }
+        #ui { position: absolute; bottom: 20px; left: 20px; right: 20px; background: rgba(0,0,0,0.8); color: #fff; padding: 20px; border-radius: 10px; z-index: 100; border: 1px solid #333; }
+        #graph { position: absolute; top: 20px; left: 20px; width: 300px; height: 220px; background: rgba(0,0,0,0.8); z-index: 100; border-radius: 10px; }
+        input { width: 100%; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div id="graph"><canvas id="hrChart"></canvas></div>
+    
+    <div id="ui">
+        <div id="age">ВІК: 0 МЛН РОКІВ</div>
+        <input type="range" id="timeSlider" min="0" max="100" value="0">
+        <div id="info">Тягніть повзунок, щоб почати еволюцію...</div>
+        <div style="font-size: 12px; color: #60a5fa; margin-top: 10px;">🤖 ML Клас: <span id="ml-class">-</span></div>
+    </div>
+
+    <a-scene embedded>
+        <a-sky color="#000005"></a-sky>
+        <a-sphere id="star" position="0 1.5 -5" radius="1" material="emissive: #ffaa00; shader: flat;"></a-sphere>
+        <a-light type="point" id="light" position="0 1.5 -5" intensity="1"></a-light>
+        <a-camera position="0 1.5 0"></a-camera>
+    </a-scene>
+
+    <script type="module">
+        import { getStarStats } from '../src/utils/physics.js';
+        import { classifySpectralClass } from '../src/ml/star-classifier.js';
+
+        const slider = document.getElementById('timeSlider');
+        const star = document.getElementById('star');
+        
+        // Налаштування Графіка
+        const ctx = document.getElementById('hrChart').getContext('2d');
+        const hrChart = new Chart(ctx, {
+            type: 'scatter',
+            data: { datasets: [{ label: 'Трек ГР', data: [], borderColor: '#ff3333', showLine: true }] },
+            options: { scales: { x: { reverse: true, title: {display:true, text:'T(K)'} }, y: { title: {display:true, text:'L'} } } }
+        });
+
+        slider.addEventListener('input', (e) => {
+            const t = parseFloat(e.target.value);
+            const stats = getStarStats(t);
+            const mlClass = classifySpectralClass(stats.temp);
+
+            // Оновлення 3D
+            star.setAttribute('radius', Math.max(0.2, stats.rad * 0.2));
+            star.setAttribute('material', 'color', stats.color);
+            
+            // Оновлення Тексту
+            document.getElementById('age').innerText = `ВІК: ${Math.floor(t * 150)} МЛН РОКІВ`;
+            document.getElementById('info').innerText = `${stats.s_class}: ${stats.info}`;
+            document.getElementById('ml-class').innerText = mlClass;
+
+            // Оновлення Графіка
+            hrChart.data.datasets[0].data.push({ x: stats.temp, y: stats.lum });
+            hrChart.update('none');
+        });
+    </script>
+</body>
+</html>
