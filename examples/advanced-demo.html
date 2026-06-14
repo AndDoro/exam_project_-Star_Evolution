@@ -2,257 +2,259 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Stellar Evolution Pro Simulator</title>
+    <title>Stellar Evolution Ultimate Simulator</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { margin: 0; background: #010409; font-family: 'Segoe UI', Tahoma, sans-serif; overflow: hidden; color: #e6edf3; }
+        body { margin: 0; background: #010204; font-family: 'Segoe UI', sans-serif; overflow: hidden; color: #e6edf3; }
         
-        /* Layout: Left (Chart) 40% | Right (Model) 60% */
+        /* Layout */
         #left-panel { 
-            position: absolute; left: 0; top: 0; width: 40%; height: 100vh;
-            background: #0d1117; border-right: 2px solid #30363d;
+            position: absolute; left: 0; top: 0; width: 38%; height: 100vh;
+            background: rgba(13, 17, 23, 0.95); border-right: 2px solid #30363d;
             padding: 25px; box-sizing: border-box; z-index: 10;
-            display: flex; flex-direction: column;
+            display: flex; flex-direction: column; backdrop-filter: blur(10px);
         }
 
-        #right-panel { position: absolute; right: 0; top: 0; width: 60%; height: 100vh; }
+        #right-panel { position: absolute; right: 0; top: 0; width: 62%; height: 100vh; }
 
-        /* UI Elements */
-        #ui-header { border-bottom: 1px solid #30363d; padding-bottom: 15px; margin-bottom: 20px; }
-        #age-display { font-size: 24px; font-weight: bold; color: #58a6ff; }
-        #speed-tag { background: #238636; padding: 2px 8px; border-radius: 4px; font-size: 14px; font-weight: bold; }
-
-        .control-section {
-            position: absolute; bottom: 30px; right: 30px; width: 55%;
-            background: rgba(13, 17, 23, 0.95); padding: 30px; border-radius: 20px;
-            border: 1px solid #30363d; box-shadow: 0 10px 40px rgba(0,0,0,0.7); z-index: 20;
-        }
-
+        /* UI Styling */
+        #age-display { font-size: 26px; font-weight: 900; color: #58a6ff; text-shadow: 0 0 10px rgba(88,166,255,0.3); }
         .info-card { 
             background: #161b22; padding: 20px; border-radius: 12px; 
-            border-left: 5px solid #58a6ff; font-size: 15px; line-height: 1.6;
-            min-height: 120px; margin-top: 20px;
+            border: 1px solid #30363d; font-size: 14px; line-height: 1.7;
+            height: 200px; overflow-y: auto; margin-top: 20px;
+            scrollbar-width: thin; scrollbar-color: #30363d #161b22;
         }
 
-        .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; font-size: 14px; }
-        .label { color: #8b949e; display: block; margin-bottom: 5px; text-transform: uppercase; font-size: 11px; }
-        .value { color: #58a6ff; font-weight: bold; font-size: 16px; }
+        .control-section {
+            position: absolute; bottom: 25px; right: 25px; width: 58%;
+            background: rgba(13, 17, 23, 0.9); padding: 25px; border-radius: 20px;
+            border: 1px solid #30363d; z-index: 20; backdrop-filter: blur(10px);
+        }
 
+        .param-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0; }
+        .val { color: #58a6ff; font-weight: bold; font-family: monospace; }
         input[type=range] { width: 100%; accent-color: #58a6ff; cursor: pointer; }
         button { 
-            background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px 20px; 
+            background: #21262d; color: #c9d1d9; border: 1px solid #30363d; padding: 10px 18px; 
             border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;
         }
-        button:hover { background: #30363d; border-color: #8b949e; }
-        .btn-active { background: #238636 !important; color: white !important; border-color: #2ea043 !important; }
+        button:hover { background: #30363d; color: #fff; }
+        .btn-active { background: #238636 !important; color: #fff !important; }
     </style>
 </head>
 <body>
 
     <div id="left-panel">
-        <div id="ui-header">
-            <h2 style="margin:0; color:#58a6ff;">Діаграма Герцшпрунга-Рассела</h2>
-            <p style="font-size:13px; color:#8b949e;">Залежність світності від температури поверхні</p>
-        </div>
-
-        <div style="flex-grow: 1; min-height: 350px;">
+        <h2 style="margin:0; color:#58a6ff; font-size: 20px;">Діаграма Герцшпрунга-Рассела</h2>
+        <div style="flex-grow: 1; margin: 15px 0;">
             <canvas id="hrChart"></canvas>
         </div>
 
         <div class="param-grid">
-            <div><span class="label">Температура:</span><span id="vTemp" class="value">-</span> K</div>
-            <div><span class="label">Світність:</span><span id="vLum" class="value">-</span> L☉</div>
-            <div><span class="label">Радіус:</span><span id="vRad" class="value">-</span> R☉</div>
-            <div><span class="label">Маса:</span><span id="vMass" class="value">-</span> M☉</div>
+            <div><small>Температура:</small><br><span id="vTemp" class="val">-</span> K</div>
+            <div><small>Світність:</small><br><span id="vLum" class="val">-</span> L☉</div>
+            <div><small>Радіус:</small><br><span id="vRad" class="val">-</span> R☉</div>
+            <div><small>Маса:</small><br><span id="vMass" class="val">-</span> M☉</div>
         </div>
 
-        <div style="font-size: 13px; color: #8b949e;">
-            <strong style="color:#f85149;">AI Класифікатор:</strong> <span id="mlClass">-</span>
-        </div>
+        <div id="info-box" class="info-card">Завантаження даних еволюції...</div>
     </div>
 
     <div id="right-panel">
         <a-scene embedded vr-mode-ui="enabled: false">
-            <a-sky color="#000002"></a-sky>
-            <a-entity id="stars-field"></a-entity>
-
-            <a-entity id="star-anchor" position="3 1.5 -8">
-                <a-sphere id="star-body" radius="1" material="shader: flat;"></a-sphere>
-                <a-sphere id="star-glow" radius="1.3" material="shader: flat; transparent: true; opacity: 0.2; side: double;"></a-sphere>
-                <a-light id="star-light" type="point" intensity="2" distance="100"></a-light>
+            <a-sky color="#000005"></a-sky>
+            
+            <a-entity id="stars-container"></a-entity>
+            <a-entity id="nebula-bg" position="0 0 -50" scale="2 2 2">
+                <a-sphere radius="50" material="shader: flat; transparent: true; opacity: 0.05; color: #440088; side: back;"></a-sphere>
+                <a-sphere radius="48" material="shader: flat; transparent: true; opacity: 0.03; color: #004488; side: back;" rotation="0 45 0"></a-sphere>
             </a-entity>
 
-            <a-camera id="main-cam" position="0 1.5 0" look-controls="enabled: true" wasd-controls="enabled: false"></a-camera>
+            <a-entity id="star-anchor" position="0 0 -15">
+                <a-sphere id="star-body" material="shader: flat;"></a-sphere>
+                <a-sphere id="star-glow" material="shader: flat; transparent: true; opacity: 0.25; side: double;"></a-sphere>
+                <a-light id="star-light" type="point" intensity="2" distance="200"></a-light>
+                
+                <a-entity id="planet-orbit">
+                    <a-sphere id="distant-planet" position="15 0 0" radius="0.3" color="#444" material="roughness: 1;"></a-sphere>
+                </a-entity>
+            </a-entity>
+
+            <a-camera id="main-cam" position="0 0 5" look-controls="enabled: true" wasd-controls="enabled: false"></a-camera>
         </a-scene>
     </div>
 
     <div class="control-section">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <div id="age-display">ВІК: 0 МЛН РОКІВ</div>
-                <div id="stage-title" style="color:#8b949e; font-weight: bold; margin-top:5px;">Стадія: Підготовка</div>
+                <div id="stage-title" style="color: #8b949e; font-weight: bold; font-size: 16px;">Стадія: Ініціалізація</div>
             </div>
-            <div style="text-align: right;">
-                <span id="speed-tag">х10</span>
-                <div style="margin-top:10px;">
-                    <button id="playBtn" onclick="togglePlay()" class="btn-active">ПАУЗА ⏸</button>
-                    <button onclick="resetSim()">RESET 🔄</button>
-                </div>
+            <div>
+                <button id="playBtn" onclick="togglePlay()" class="btn-active">ПАУЗА ⏸</button>
+                <button onclick="resetSim()">RESET 🔄</button>
             </div>
         </div>
 
-        <div style="margin-top: 20px;">
-            <label class="label">Час еволюції (Прогрес життя зорі)</label>
+        <div style="margin: 20px 0;">
+            <label style="font-size: 11px; color: #8b949e;">ЧАС ЕВОЛЮЦІЇ (ХРОНОЛОГІЯ)</label>
             <input type="range" id="timeSlider" min="0" max="100" value="0" step="0.1">
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
             <div>
-                <label class="label">Початкова Маса: <span id="mVal" style="color:#58a6ff">1.0</span> M☉</label>
-                <input type="range" id="massSlider" min="0.5" max="20" step="0.5" value="1.0">
+                <label style="font-size: 11px; color: #8b949e;">ПОЧАТКОВА МАСА: <span id="mVal" style="color:#58a6ff">1.0</span> M☉</label>
+                <input type="range" id="massSlider" min="0.5" max="30" step="0.5" value="1.0">
             </div>
             <div>
-                <label class="label">Швидкість плину часу: <span id="sVal" style="color:#58a6ff">х10</span></label>
-                <input type="range" id="speedSlider" min="1" max="50" value="10">
+                <label style="font-size: 11px; color: #8b949e;">ШВИДКІСТЬ ЧАСУ: <span id="sVal" style="color:#58a6ff">х10</span></label>
+                <input type="range" id="speedSlider" min="1" max="100" value="10">
             </div>
         </div>
-
-        <div id="info-box" class="info-card">Натисніть Play для старту симуляції. Використовуйте коліщатко миші для наближення до моделі.</div>
     </div>
 
     <script>
-        // --- 1. СТВОРЕННЯ ФОНУ ЗІРОК ---
-        const stars = document.getElementById('stars-field');
-        for (let i = 0; i < 400; i++) {
+        // --- 1. ВІЗУАЛЬНЕ ОТОЧЕННЯ ---
+        const starsContainer = document.getElementById('stars-container');
+        for (let i = 0; i < 500; i++) {
             let s = document.createElement('a-sphere');
-            s.setAttribute('position', `${(Math.random()-0.5)*150} ${(Math.random()-0.5)*150} ${(Math.random()-0.5)*150}`);
-            s.setAttribute('radius', Math.random()*0.07);
-            s.setAttribute('color', '#fff');
+            let [x, y, z] = [Math.random()-0.5, Math.random()-0.5, Math.random()-0.5].map(v => v * 200);
+            s.setAttribute('position', `${x} ${y} ${z}`);
+            s.setAttribute('radius', Math.random()*0.1);
+            s.setAttribute('color', ['#fff', '#ccf', '#fcc', '#ffc'][Math.floor(Math.random()*4)]);
             s.setAttribute('opacity', Math.random());
-            stars.appendChild(s);
+            starsContainer.appendChild(s);
         }
 
-        // --- 2. ГРАФІК (HR-DIAGRAM) ---
+        // --- 2. ГРАФІК ГЕРЦШПРУНГА-РАССЕЛА ---
         const ctx = document.getElementById('hrChart').getContext('2d');
         const hrChart = new Chart(ctx, {
             type: 'scatter',
-            data: { datasets: [{ label: 'Шлях еволюції', data: [], borderColor: '#58a6ff', borderWidth: 2, showLine: true, pointRadius: 0, tension: 0.3 }] },
+            data: { datasets: [{ label: 'Трек', data: [], borderColor: '#58a6ff', borderWidth: 2, showLine: true, pointRadius: 0 }] },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 scales: {
-                    x: { reverse: true, min: 2000, max: 40000, title: {display: true, text: 'Температура T (K)', color: '#8b949e'}, grid: {color:'#21262d'}, ticks: {color: '#8b949e'} },
-                    y: { type: 'logarithmic', min: 0.01, max: 100000, title: {display: true, text: 'Світність L (L/L☉)', color: '#8b949e'}, grid: {color:'#21262d'}, ticks: {color: '#8b949e', callback: (v) => v >= 1 ? v : v.toFixed(2)} }
+                    x: { reverse: true, min: 2000, max: 45000, title: {display: true, text: 'Температура (K)'}, grid: {color: '#21262d'} },
+                    y: { type: 'logarithmic', min: 0.001, max: 1000000, title: {display: true, text: 'Світність (L☉)'}, grid: {color: '#21262d'} }
                 },
                 plugins: { legend: { display: false } }
             }
         });
 
-        // --- 3. ФІЗИЧНА МОДЕЛЬ (11 СТАДІЙ) ---
+        // --- 3. ДЕТАЛЬНА ФІЗИЧНА МОДЕЛЬ (11 ЕТАПІВ) ---
         let simTime = 0, currentMass = 1.0, isPlaying = true;
 
-        function getEvolutionData(t, mass) {
+        function getStarEvolution(t, mass) {
             let temp, lum, rad, stage, info, color;
-            let f = t / 100; // 0 to 1
+            let f = t / 100;
 
-            if (f < 0.05) {
-                stage = "Молекулярна хмара";
-                temp = 2000; lum = 0.01; rad = 20; color = "#444";
-                info = "Гравітаційний колапс величезної газової хмари. Реакцій ще немає, хмара стискається під власною вагою.";
-            } else if (f < 0.12) {
-                stage = "Протозоря";
-                temp = 3000; lum = 100; rad = 10; color = "#ff4500";
-                info = "Ядро розігрівається через стиснення. Звільняється гравітаційна енергія. Зоря стає видимою в ІЧ-діапазоні.";
-            } else if (f < 0.20) {
+            if (f < 0.08) {
+                stage = "Гравітаційний колапс";
+                temp = 2000; lum = 0.05; rad = 25; color = "#555";
+                info = "<b>Стадія 1: Молекулярна хмара.</b> Величезна хмара газу та пилу починає стискатися під дією власної гравітації. Гравітаційна енергія перетворюється на тепло, але термоядерні реакції ще неможливі. Хмара розпадається на фрагменти, кожен з яких стане майбутньою зорею.";
+            } else if (f < 0.15) {
+                stage = "Формування Протозорі";
+                temp = 3200; lum = 80; rad = 12; color = "#ff4500";
+                info = "<b>Стадія 2: Протозоря.</b> Об'єкт стає щільним та гарячим. Він оточений залишками газового кокона. Зоря світиться за рахунок виділення гравітаційної енергії стиснення (механізм Кельвіна-Гельмгольца). Центральна температура наближається до мільйона градусів.";
+            } else if (f < 0.22) {
                 stage = "Зоря типу T Тельця";
-                temp = 4000; lum = 5; rad = 4; color = "#ff8c00";
-                info = "Потужні зоряні вітри розчищають навколишню туманність. Температура ядра наближається до 10 млн К.";
-            } else if (f < 0.25) {
-                stage = "Вхід на Головну послідовність";
-                temp = 5200; lum = 0.8; rad = 1; color = "#ffd700";
-                info = "Початок термоядерного синтезу: Гідроген перетворюється на Гелій. Зоря стає стабільною.";
-            } else if (f < 0.80) {
-                stage = "Головна послідовність (Зрілість)";
-                temp = 5800 + (mass-1)*1000; lum = Math.pow(mass, 3.5); rad = Math.pow(mass, 0.8); color = mass > 2 ? "#b0e0e6" : "#fff9e6";
-                info = "Найдовший етап. Гідростатична рівновага між тиском випромінювання та гравітацією.";
+                temp = 4200; lum = 10; rad = 5; color = "#ff8c00";
+                info = "<b>Стадія 3: Перед-головна послідовність.</b> Зоря вже має кінцеву масу, але ще не почала стабільне спалювання гідрогену. Потужні зоряні вітри 'здувають' залишки газу навколо, роблячи зорю видимою. У цей час навколо зорі починають формуватися планетарні диски.";
+            } else if (f < 0.28) {
+                stage = "Запалювання ядра (ZAMS)";
+                temp = 5400; lum = 0.9; rad = 1.1; color = "#ffd700";
+                info = "<b>Стадія 4: Вхід на Головну послідовність.</b> Температура в центрі сягнула 10-15 мільйонів градусів. Почалася протон-протонна реакція: синтез Гелію з Гідрогену. Гідростатична рівновага встановлена — тиск випромінювання тепер балансує гравітацію.";
+            } else if (f < 0.82) {
+                stage = "Головна послідовність";
+                temp = 5800 + (mass-1)*1200; lum = Math.pow(mass, 3.8); rad = Math.pow(mass, 0.75); 
+                color = mass > 3 ? "#a0d8f0" : "#fff5e6";
+                info = "<b>Стадія 5: Зрілість.</b> Найстабільніший період. Зоря спалює Гідроген у ядрі. Тривалість цього етапу залежить від маси: Сонце житиме так 10 млрд років, а масивні зорі — лише мільйони. Це 'золотий вік' зорі, коли навколо неї може існувати життя на планетах.";
             } else if (f < 0.88) {
-                stage = "Субгігант";
-                temp = 5000; lum = 5 * mass; rad = 3 * mass; color = "#ffa500";
-                info = "Гідроген у ядрі вичерпано. Починається горіння в оболонці навколо ядра. Зоря починає роздуватися.";
+                stage = "Вичерпання Гідрогену (Субгігант)";
+                temp = 5100; lum = 8 * mass; rad = 4 * mass; color = "#ffa500";
+                info = "<b>Стадія 6: Субгігант.</b> Гідроген у ядрі закінчився, утворилося гелієве ядро. Починається горіння Гідрогену в тонкому шарі навколо ядра. Зоря починає повільно розширюватися, а її поверхня — холонути.";
             } else if (f < 0.93) {
-                stage = "Червоний гігант";
-                temp = 3500; lum = 1000 * mass; rad = 150 * mass; color = "#ff0000";
-                info = "Ядро стискається до величезної густини, а зовнішня оболонка розширюється на мільйони кілометрів.";
-            } else if (f < 0.96) {
-                stage = "Гелієвий спалах / Горизонтальна гілка";
-                temp = 5000; lum = 50 * mass; rad = 10 * mass; color = "#ffcc00";
-                info = "Вибуховий початок горіння Гелію в ядрі. Зоря трохи стискається і стабілізується на короткий час.";
+                stage = "Червоний гігант (RGB)";
+                temp = 3400; lum = 1500 * mass; rad = 180 * mass; color = "#ff2200";
+                info = "<b>Стадія 7: Гігант.</b> Гравітація стискає ядро, що призводить до неймовірного розширення оболонки. Зоря стає в сотні разів більшою. Якщо це Сонце, воно поглине Меркурій та Венеру. Світність зростає в тисячі разів через величезну площу поверхні.";
+            } else if (f < 0.95) {
+                stage = "Гелієвий спалах";
+                temp = 5200; lum = 80 * mass; rad = 12 * mass; color = "#ffcc00";
+                info = "<b>Стадія 8: Горіння Гелію.</b> Температура ядра сягнула 100 млн градусів. Починається синтез Карбону з Гелію (потрійний альфа-процес). Зоря трохи стискається і стає гарячішою, переходячи на так звану 'горизонтальну гілку' діаграми ГР.";
             } else if (f < 0.98) {
-                stage = "Асимптотична гілка гігантів";
-                temp = 3000; lum = 3000 * mass; rad = 250 * mass; color = "#ff4500";
-                info = "Подвійне горіння шарів (He та H). Зоря стає вкрай нестабільною, починаються пульсації.";
-            } else if (f < 0.995) {
+                stage = "Подвійне шарове горіння";
+                temp = 3100; lum = 4000 * mass; rad = 280 * mass; color = "#ff4400";
+                info = "<b>Стадія 9: Асимптотична гілка.</b> Гелій у ядрі вичерпано. Тепер горять два шари: гелієвий і гідрогенний. Зоря стає нестабільною, починаються потужні теплові пульсації, які викидають величезну кількість речовини в космос.";
+            } else if (f < 0.996) {
                 stage = "Планетарна туманність";
-                temp = 10000; lum = 500; rad = 10; color = "#00ffff";
-                info = "Зоря скидає зовнішні шари в космос. Залишається лише гаряче оголене ядро.";
+                temp = 15000; lum = 600; rad = 8; color = "#00ffff";
+                info = "<b>Стадія 10: Скидання оболонки.</b> Зоря остаточно відкидає свої зовнішні шари, оголюючи гаряче ядро. Це іонізований газ, що світиться різними кольорами. Це один з найкрасивіших, але найкоротших моментів у житті космічного об'єкта.";
             } else {
-                stage = mass < 8 ? "Білий карлик" : "Чорна діра / Нейтронна зоря";
-                temp = 40000; lum = 0.01; rad = 0.05; color = "#e0ffff";
-                info = "Фінальна стадія. Реакцій немає. Залишок зорі повільно холоне протягом трильйонів років.";
+                stage = mass < 8 ? "Білий карлик" : "Колапс ядра";
+                temp = 50000; lum = 0.02; rad = 0.06; color = "#f0ffff";
+                info = "<b>Стадія 11: Фінал.</b> Залишилося надщільне ядро розміром із Землю. Термоядерні реакції припинилися. Він підтримується тиском вироджених електронів. Білий карлик буде повільно холонути трильйони років, стаючи чорним карликом.";
             }
             return { temp, lum, rad, stage, info, color };
         }
 
-        // --- 4. ENGINE & CONTROLS ---
-        function update(t) {
-            const data = getEvolutionData(t, currentMass);
+        // --- 4. СКРИПТ КЕРУВАННЯ ---
+        function updateSim(t) {
+            const data = getStarEvolution(t, currentMass);
             const star = document.getElementById('star-body');
             const glow = document.getElementById('star-glow');
             const light = document.getElementById('star-light');
 
-            // 3D Visuals
-            const visualScale = Math.pow(data.rad, 0.4) * 0.7;
+            // Візуальне масштабування: Логарифмічне + адаптивне
+            // Для карлика (0.06) -> ~0.3 | Для гіганта (300) -> ~10
+            const visualScale = Math.pow(data.rad, 0.45) * 0.8;
             star.setAttribute('radius', visualScale);
             star.setAttribute('color', data.color);
-            glow.setAttribute('radius', visualScale * 1.5);
+            glow.setAttribute('radius', visualScale * 1.4);
             glow.setAttribute('color', data.color);
-            light.setAttribute('light', `intensity: ${1.5 + data.lum/10000}; color: ${data.color}`);
+            light.setAttribute('light', `intensity: ${1.8 + data.lum/8000}; color: ${data.color}; distance: ${200 + data.rad}`);
 
-            // UI
-            const realAge = t * (12000 / Math.pow(currentMass, 2.5));
+            // Анімація орбіти планети-супутника
+            document.getElementById('planet-orbit').setAttribute('rotation', `0 ${t * 50} 0`);
+            document.getElementById('distant-planet').setAttribute('position', `${15 + visualScale} 0 0`);
+
+            // Текст та Час
+            const timeScale = 12000 / Math.pow(currentMass, 2.3);
+            const realAge = t * (timeScale / 100);
             document.getElementById('age-display').innerText = realAge > 1000 ? `ВІК: ${(realAge/1000).toFixed(2)} МЛРД РОКІВ` : `ВІК: ${realAge.toFixed(0)} МЛН РОКІВ`;
             document.getElementById('stage-title').innerText = `Стадія: ${data.stage}`;
-            document.getElementById('info-box').innerText = data.info;
+            document.getElementById('info-box').innerHTML = data.info;
             document.getElementById('vTemp').innerText = Math.floor(data.temp).toLocaleString();
-            document.getElementById('vLum').innerText = data.lum.toFixed(2);
+            document.getElementById('vLum').innerText = data.lum.toFixed(3);
             document.getElementById('vRad').innerText = data.rad.toFixed(2);
             document.getElementById('vMass').innerText = currentMass;
-            document.getElementById('mlClass').innerText = data.stage;
 
-            // Chart
+            // Графік
             if (hrChart.data.datasets[0].data.length > t * 2) hrChart.data.datasets[0].data = [];
             hrChart.data.datasets[0].data.push({ x: data.temp, y: data.lum });
             hrChart.update('none');
         }
 
-        // --- CONTROLS ---
-        const slider = document.getElementById('timeSlider');
-        const massSlider = document.getElementById('massSlider');
-        const speedSlider = document.getElementById('speedSlider');
+        // Event Listeners
+        const tSlider = document.getElementById('timeSlider');
+        const mSlider = document.getElementById('massSlider');
+        const sSlider = document.getElementById('speedSlider');
 
-        massSlider.oninput = function() {
+        mSlider.oninput = function() {
             currentMass = parseFloat(this.value);
             document.getElementById('mVal').innerText = currentMass;
             resetSim();
         };
 
-        speedSlider.oninput = function() {
-            const val = this.value;
-            document.getElementById('sVal').innerText = `х${val}`;
-            document.getElementById('speed-tag').innerText = `х${val}`;
+        sSlider.oninput = function() {
+            document.getElementById('sVal').innerText = `х${this.value}`;
         };
 
-        slider.oninput = function() { simTime = parseFloat(this.value); update(simTime); };
+        tSlider.oninput = function() { 
+            simTime = parseFloat(this.value); 
+            updateSim(simTime); 
+        };
 
         function togglePlay() {
             isPlaying = !isPlaying;
@@ -262,31 +264,31 @@
 
         function resetSim() {
             simTime = 0;
-            slider.value = 0;
+            tSlider.value = 0;
             hrChart.data.datasets[0].data = [];
-            update(0);
+            updateSim(0);
         }
 
-        // ZOOM SYSTEM
+        // НОВИЙ ПОКРАЩЕНИЙ ЗУМ (без обмежень для гіганта)
         window.addEventListener('wheel', (e) => {
             const cam = document.getElementById('main-cam');
             let pos = cam.getAttribute('position');
-            pos.z += e.deltaY * 0.01;
-            // Обмеження: від 0.5м до 30м (дозволяє дуже близьке наближення)
-            pos.z = Math.min(Math.max(pos.z, -7.5), 10); 
+            pos.z += e.deltaY * 0.02;
+            // Розширено зум: від -10 (всередині) до 150 (дуже далеко)
+            pos.z = Math.min(Math.max(pos.z, -10), 150); 
             cam.setAttribute('position', pos);
         });
 
-        // MAIN LOOP
+        // Loop
         setInterval(() => {
             if (isPlaying && simTime < 100) {
-                simTime += parseFloat(speedSlider.value) / 100;
-                slider.value = simTime;
-                update(simTime);
+                simTime += parseFloat(sSlider.value) / 150;
+                tSlider.value = simTime;
+                updateSim(simTime);
             }
         }, 50);
 
-        window.onload = () => update(0);
+        window.onload = () => updateSim(0);
     </script>
 </body>
 </html>
